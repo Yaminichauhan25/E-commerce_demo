@@ -13,6 +13,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const wishlist_module_1 = __importDefault(require("../models/wishlist.module")); // Import your Wishlist model
+const constant_1 = require("../constants/constant");
+//ADD_TO_WISHLIST
 class WishlistController {
     addProductToWishlist(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27,10 +29,10 @@ class WishlistController {
                     const productId = product ? product.productId : undefined;
                     const isUserInArray = productIds.some((objId) => objId === productId);
                     if (isUserInArray) {
-                        return res.json({ message: "Product already exist" });
+                        return res.json({ message: constant_1.constants.message.productExist });
                     }
                     yield wishlist_module_1.default.findOneAndUpdate({ userId }, { $push: { products: products } });
-                    return res.json({ message: "Product added to existing wishlist" });
+                    return res.json({ message: constant_1.constants.message.productAddedToExistingWishlist });
                 }
                 else {
                     // Wishlist doesn't exist, create a new wishlist
@@ -38,11 +40,24 @@ class WishlistController {
                         userId,
                         products,
                     });
-                    return res.json({ message: "New wishlist created and product added" });
+                    return res.json({ message: constant_1.constants.message.wishlistCreated });
                 }
             }
             catch (err) {
-                return res.status(500).json({ error: "Internal Server Error" });
+                return res.status(500).json({ error: constant_1.constants.message.error });
+            }
+        });
+    }
+    //GET_WISHLIST
+    getWishlistData(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const getWishlist = yield wishlist_module_1.default.find();
+                // return getWishlist
+                res.status(200).json({ data: getWishlist });
+            }
+            catch (err) {
+                throw err;
             }
         });
     }
@@ -51,13 +66,17 @@ class WishlistController {
             try {
                 const getWishlist = yield wishlist_module_1.default.find();
                 return getWishlist;
-                //  return  res.status(200).json({ data: getWishlist });
+                // return res.status(200).json({ data: getWishlist });
             }
             catch (err) {
                 throw err;
+                // Handle the error appropriately, for example, send an error response
+                console.error(err);
+                // return res.status(500).json({ error: 'Internal Server Error' });
             }
         });
     }
+    //REMOVE_PRODUCT_FROM_WISHLIST
     removeProductFromWishlist(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -71,6 +90,7 @@ class WishlistController {
             }
         });
     }
+    //REMOVE_WISHLIST
     removeWishlist(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {

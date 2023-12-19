@@ -25,7 +25,15 @@ const userSchema = new mongoose.Schema<UserInterface>(
       type: String,
       required: false,
     },
-    devices: [{ type: String }], // Array to store device IDs
+    gender: {
+      type: String,
+      required: false,
+    },
+    dob: {
+      type: Date,
+      required: false,
+    },
+    // devices: [{ type: String }], // Array to store device IDs
   },
   { timestamps: true }
 );

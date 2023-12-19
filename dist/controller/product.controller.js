@@ -15,6 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.productController = void 0;
 const product_model_1 = __importDefault(require("../models/product.model"));
 const wishlist_controller_1 = __importDefault(require("./wishlist.controller"));
+const constant_1 = require("../constants/constant");
+//CREATE_PRODUCT
 class ProductController {
     createProduct(req, res) {
         var _a;
@@ -33,7 +35,7 @@ class ProductController {
                 });
                 res
                     .status(200)
-                    .json({ message: "product added successfuly", data: product });
+                    .json({ message: constant_1.constants.message.productAdded, data: product });
             }
             catch (error) {
                 res.status(400).json({ data: error });
@@ -75,33 +77,31 @@ class ProductController {
     //     res.status(500).json({ error: "Internal Server Error" });
     //   }
     // }
+    //GET_PRODUCTS
     getProducts(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const wishlistData = yield wishlist_controller_1.default.getWishlist();
-                console.log("_------------", wishlistData, "-------");
                 const newData = yield product_model_1.default.find();
-                console.log(newData);
                 const productIds = wishlistData
                     .flatMap(wishlist => wishlist.products.map(product => product.productId.toString()));
-                console.log(productIds);
                 const productsWithWishlistStatus = newData.map(product => {
                     const isWishlisted = productIds.includes(product._id.toString());
-                    console.log(product._id.toString() === productIds.toString());
                     return Object.assign(Object.assign({}, product.toObject()), { isWishlisted });
                 });
                 res.status(200).json({ data: productsWithWishlistStatus });
             }
             catch (error) {
                 console.error(error);
-                res.status(500).json({ error: "Internal Server Error" });
+                res.status(500).json({ error: constant_1.constants.message.error });
             }
         });
     }
+    //GET_PRODUCT_BY_ID
     getProductById(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const id = req.query.id;
+                const id = req.params.id;
                 const product = yield product_model_1.default.findById(id);
                 res.status(200).json({ data: product });
             }
@@ -110,11 +110,13 @@ class ProductController {
             }
         });
     }
+    //REMOVE_PRODUCT_BY_ID
     removeProductById(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const id = req.params.id;
-                const product = yield product_model_1.default.deleteOne({ id });
+                const _id = req.params.id;
+                console.log(_id);
+                const product = yield product_model_1.default.deleteOne({ _id });
                 res.status(200).json({ data: product });
             }
             catch (error) {

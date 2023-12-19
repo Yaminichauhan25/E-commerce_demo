@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import cartModel from "../models/cart.model";
+import { constants } from "../constants/constant";
 
+//CREATE_CART
 class CartController {
   async CreateAndAddToCart(req: Request, res: Response, next: NextFunction) {
     try {
@@ -20,7 +22,7 @@ class CartController {
             { new: true }
           );
         }
-        res.status(400).json({ message: "new product added", data: newCart });
+        res.status(400).json({ message:constants.message.productAdded, data: newCart });
       } else {
         const cart = await cartModel.create({
           userId: req.body.userId,
@@ -28,12 +30,14 @@ class CartController {
         });
         res
           .status(200)
-          .json({ message: "successfully added to cart", data: cart });
+          .json({ message: constants.message.addedToCart, data: cart });
       }
     } catch (err) {
       throw err;
     }
   }
+
+  //GET_ITEMS_OF_CART
   async getItems(req: Request, res: Response, next: NextFunction) {
     try {
       const data = await cartModel.find();
@@ -42,6 +46,8 @@ class CartController {
       throw err;
     }
   }
+
+  //REMOVE_PRODUCT_FROM_CART
   async removeProductFromCart(req: Request, res: Response, next: NextFunction) {
     try {
         const productId = req.params.id;
@@ -50,12 +56,13 @@ class CartController {
         { $pull: { cartItems: { productId: productId} } },
       
     );
-    res.status(200).json({message:"removed successfully",data:data})
+    res.status(200).json({message:constants.message.removeFromcart,data:data})
     } catch (err) {
       throw err;
     }
   }
 
+ //REMOVE_PRODUCT_FROM_CART_BY_ID
   async removeCartById(req: Request, res: Response, next: NextFunction) {
     try {
       const _id = req.params.id;
@@ -65,6 +72,5 @@ class CartController {
       throw err;
     }
   }
-
 }
 export const cartController= new CartController()

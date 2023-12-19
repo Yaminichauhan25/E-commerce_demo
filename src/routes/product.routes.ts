@@ -14,12 +14,12 @@ router.get(
     productController.getProducts
   );
   router.get(
-    "/getProductById",verifytoken,
+    "/getProductById/:id",verifytoken,
     productController.getProductById
   );
   router.delete(
-    "/removeProductById",
-    productController.removeProductById
+    "/removeProductById/:id",
+   verifytoken,productController.removeProductById
   );
 export default router;
 

@@ -46,26 +46,31 @@ const dotenv = __importStar(require("dotenv"));
 const path_1 = require("path");
 const otp_model_1 = __importDefault(require("../models/otp.model"));
 const user_service_1 = require("../service/user.service");
+const moment_1 = __importDefault(require("moment"));
 dotenv.config();
 exports.config = dotenv.config({
     path: (0, path_1.join)(process.cwd() + "/.env"),
 });
+//SIGN_UP
 class UserController {
     signup(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { firstName, lastName, email, password, phoneNumber } = req.body;
+                const { firstName, lastName, email, password, phoneNumber, dob, gender } = req.body;
                 const existUser = yield user_model_1.default.findOne({ email: email });
                 if (existUser) {
                     (0, response_handler_1.handleErrorResponse)(res, constant_1.constants.statusCode.alreadyExist, constant_1.constants.message.exist);
                 }
                 else {
+                    const dobDate = dob ? (0, moment_1.default)(dob, 'DD-MM-YYYY').toDate() : undefined;
                     const user = yield user_model_1.default.create({
                         firstName: firstName,
                         lastName: lastName,
                         email: email,
                         password: (0, md5_1.default)(password),
                         phoneNumber: phoneNumber,
+                        dob: dobDate,
+                        gender: gender
                     });
                     const token = jsonwebtoken_1.default.sign({ _id: user._id }, process.env.JWT_SECRET, {
                         expiresIn: process.env.JWT_EXPIRES,
@@ -104,7 +109,7 @@ class UserController {
                 }
                 const verifypassword = (0, md5_1.default)(password) === existUser.password;
                 if (!verifypassword) {
-                    return res.status(400).json({ message: "Password does not match" });
+                    return res.status(400).json({ message: constant_1.constants.message.passwordNotMatched });
                 }
                 const token = jsonwebtoken_1.default.sign({ _id: existUser._id }, process.env.JWT_SECRET, {
                     expiresIn: process.env.JWT_EXPIRES,
@@ -125,14 +130,14 @@ class UserController {
                 }
                 const success = yield user_service_1.userService.sendOtpBySMS(otp, phoneNumber);
                 if (success) {
-                    res.status(200).json({ message: "Login successful", token });
+                    res.status(200).json({ message: constant_1.constants.message.login, token });
                 }
                 else {
-                    res.status(500).json({ message: "Error sending OTP" });
+                    res.status(500).json({ message: constant_1.constants.message.errorSendingOtp });
                 }
             }
             catch (err) {
-                res.status(500).json({ message: "Internal Server Error" });
+                res.status(500).json({ message: constant_1.constants.message.error });
             }
         });
     }
@@ -165,7 +170,7 @@ class UserController {
                     yield user_service_1.userService.sendOtpByEmail(otp, email);
                 }
                 yield user_service_1.userService.sendOtpBySMS(otp, phoneNumber);
-                res.status(200).json({ message: "otp sent" });
+                res.status(200).json({ message: constant_1.constants.message.otpSent });
             }
             catch (err) {
                 res.status(400).json(err.message);
@@ -192,10 +197,10 @@ class UserController {
                 else {
                     if (password == confirmPassword) {
                         yield user_model_1.default.findByIdAndUpdate({ _id: data._id }, { $set: { password: (0, md5_1.default)(password) } });
-                        res.status(400).json({ message: 'password updated' });
+                        res.status(400).json({ message: constant_1.constants.message.passwordUpdated });
                     }
                     else {
-                        res.status(400).json({ message: 'enter same password' });
+                        res.status(400).json({ message: constant_1.constants.message.enterSamePassword });
                     }
                 }
             }
@@ -216,6 +221,27 @@ class UserController {
             }
         });
     }
+    //UPDATE PROFILE
+    updateProfile(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const userId = req.params.id;
+                const { firstName, lastName, email, phoneNumber, dob, gender } = req.body;
+                const dobDate = dob ? (0, moment_1.default)(dob, 'DD-MM-YYYY').toDate() : undefined;
+                const user = yield user_model_1.default.findOneAndUpdate({ _id: userId }, { $set: {
+                        firstName,
+                        lastName,
+                        phoneNumber,
+                        dobDate,
+                        gender
+                    } });
+                (0, response_handler_1.handleSuccessResponse)(res, constant_1.constants.statusCode.success, constant_1.constants.message.updateProfile, user);
+            }
+            catch (err) {
+                (0, response_handler_1.handleErrorResponse)(res, constant_1.constants.statusCode.internalServerError, err.message);
+            }
+        });
+    }
     //LOGOUT
     signOut(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -223,16 +249,16 @@ class UserController {
                 const authToken = req.header("Authorization");
                 const secret = constant_1.APP_CONFIG.jwt_secret;
                 if (!authToken) {
-                    return res.status(401).json({ message: "Unauthorized" });
+                    return res.status(401).json({ message: constant_1.constants.message.unauthorized });
                 }
                 const decodedToken = jsonwebtoken_1.default.verify(authToken, secret);
                 const userId = decodedToken._id;
                 // Clear user session in Redis
                 redis_1.client.del(`user:${userId}`);
-                res.status(200).json({ message: "Logout successful" });
+                res.status(200).json({ message: constant_1.constants.message.logout });
             }
             catch (err) {
-                res.status(500).json({ message: "Internal Server Error" });
+                res.status(500).json({ message: constant_1.constants.message.error });
             }
         });
     }

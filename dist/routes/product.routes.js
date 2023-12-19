@@ -10,8 +10,8 @@ const user_middleware_1 = __importDefault(require("../middleware/user.middleware
 const router = (0, express_1.Router)();
 router.post("/create", image_1.default.single("image"), user_middleware_1.default, product_controller_1.productController.createProduct);
 router.get("/getProducts", user_middleware_1.default, product_controller_1.productController.getProducts);
-router.get("/getProductById", user_middleware_1.default, product_controller_1.productController.getProductById);
-router.delete("/removeProductById", product_controller_1.productController.removeProductById);
+router.get("/getProductById/:id", user_middleware_1.default, product_controller_1.productController.getProductById);
+router.delete("/removeProductById/:id", user_middleware_1.default, product_controller_1.productController.removeProductById);
 exports.default = router;
 // //swaggerJSDoc implementation
 // /**

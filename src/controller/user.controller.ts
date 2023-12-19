@@ -12,15 +12,18 @@ import * as dotenv from "dotenv";
 import { join } from "path";
 import otpModel from "../models/otp.model";
 import { userService } from "../service/user.service";
+import moment from "moment";
 dotenv.config();
 
 export const config = dotenv.config({
   path: join(process.cwd() + "/.env"),
 });
+
+//SIGN_UP
 class UserController {
   async signup(req: Request, res: Response) {
     try {
-      const { firstName, lastName, email, password, phoneNumber } = req.body;
+      const { firstName, lastName, email, password, phoneNumber,dob,gender } = req.body;
       const existUser = await userModel.findOne({ email: email });
       if (existUser) {
         handleErrorResponse(
@@ -29,12 +32,15 @@ class UserController {
           constants.message.exist
         );
       } else {
+        const dobDate = dob ? moment(dob, 'DD-MM-YYYY').toDate() : undefined;
         const user = await userModel.create({
           firstName: firstName,
           lastName: lastName,
           email: email,
           password: md5(password),
           phoneNumber: phoneNumber,
+          dob:dobDate,
+          gender:gender
         });
         const token = jwt.sign(
           { _id: user._id },
@@ -91,7 +97,7 @@ class UserController {
       }
       const verifypassword = md5(password) === existUser.password;
       if (!verifypassword) {
-        return res.status(400).json({ message: "Password does not match" });
+        return res.status(400).json({ message:constants.message.passwordNotMatched  });
       }
 
       const token = jwt.sign(
@@ -107,8 +113,10 @@ class UserController {
         email: existUser.email,
         token: token,
       });
+      const expirationTimeInSeconds = 5 * 24 * 3600; // 5 days in seconds
+        client.expire(`user:${existUser._id}`, expirationTimeInSeconds);
 
-      client.expire(`user:${existUser._id}`, 3600);
+      //client.expire(`user:${existUser._id}`, 3600);
 
       const userExist = await otpModel.findOne({ phoneNumber: phoneNumber });
       const otp = Math.floor(1000 + Math.random() * 9000);
@@ -123,12 +131,12 @@ class UserController {
       }
       const success = await userService.sendOtpBySMS(otp, phoneNumber);
       if (success) {
-        res.status(200).json({ message: "Login successful", token });
+        res.status(200).json({ message: constants.message.login, token });
       } else {
-        res.status(500).json({ message: "Error sending OTP" });
+        res.status(500).json({ message: constants.message.errorSendingOtp });
       }
     } catch (err) {
-      res.status(500).json({ message: "Internal Server Error" });
+      res.status(500).json({ message:constants.message.error });
     }
   }
 
@@ -166,7 +174,7 @@ class UserController {
         await userService.sendOtpByEmail(otp, email);
       }
       await userService.sendOtpBySMS(otp, phoneNumber);
-      res.status(200).json({ message: "otp sent" });
+      res.status(200).json({ message: constants.message.otpSent});
     } catch (err: any) {
       res.status(400).json(err.message);
     }
@@ -203,9 +211,9 @@ async ResetPassword(
           { _id: data._id },
           { $set: { password: md5(password) } }
         );
-        res.status(400).json({message:'password updated'});
+        res.status(400).json({message:constants.message.passwordUpdated});
       } else {
-        res.status(400).json({message:'enter same password'});
+        res.status(400).json({message:constants.message.enterSamePassword});
       }
     }
   } catch (err: any) {
@@ -223,21 +231,53 @@ async ResetPassword(
     }
   }
 
+//UPDATE PROFILE
+async updateProfile(req: Request, res: Response) {
+  try {
+    const userId =req.params.id;
+    const { firstName, lastName, email,phoneNumber, dob, gender } = req.body;
+    const dobDate = dob ? moment(dob, 'DD-MM-YYYY').toDate() : undefined;
+      const user = await userModel.findOneAndUpdate(
+        {_id:userId},
+        {$set:{
+          firstName,
+          lastName,
+          phoneNumber,
+          dobDate,
+          gender
+        }}
+      )
+      handleSuccessResponse(
+        res,
+        constants.statusCode.success,
+        constants.message.updateProfile,
+        user,
+      );
+    }
+   catch (err: any) {
+    handleErrorResponse(
+      res,
+      constants.statusCode.internalServerError,
+      err.message
+    );
+  }
+}
+
 //LOGOUT
   async signOut(req: Request, res: Response) {
     try {
       const authToken = req.header("Authorization");
       const secret = <string>APP_CONFIG.jwt_secret;
       if (!authToken) {
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({ message:constants.message.unauthorized });
       }
       const decodedToken = jwt.verify(authToken, secret) as JwtPayload;
       const userId = decodedToken._id;
       // Clear user session in Redis
       client.del(`user:${userId}`);
-      res.status(200).json({ message: "Logout successful" });
+      res.status(200).json({ message:constants.message.logout });
     } catch (err) {
-      res.status(500).json({ message: "Internal Server Error" });
+      res.status(500).json({ message: constants.message.error});
     }
   }
 }

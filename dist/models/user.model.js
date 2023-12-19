@@ -46,7 +46,15 @@ const userSchema = new mongoose_1.default.Schema({
         type: String,
         required: false,
     },
-    devices: [{ type: String }], // Array to store device IDs
+    gender: {
+        type: String,
+        required: false,
+    },
+    dob: {
+        type: Date,
+        required: false,
+    },
+    // devices: [{ type: String }], // Array to store device IDs
 }, { timestamps: true });
 const userModel = (0, mongoose_1.model)("userDetails", userSchema);
 exports.default = userModel;

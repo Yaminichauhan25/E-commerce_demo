@@ -14,6 +14,7 @@ createConnection;
 
 const app = express();
 const port = APP_CONFIG.port;
+// console.log(port)
 // Apply middleware
 app.use(sessionMiddleware);
 app.use(express.json()); // for parsing application/json , It's necessary when dealing with JSON data sent in the request payload.

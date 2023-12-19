@@ -14,6 +14,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.cartController = void 0;
 const cart_model_1 = __importDefault(require("../models/cart.model"));
+const constant_1 = require("../constants/constant");
+//CREATE_CART
 class CartController {
     CreateAndAddToCart(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26,7 +28,7 @@ class CartController {
                     if (!updatedCart) {
                         newCart = yield cart_model_1.default.findOneAndUpdate({ userId: req.body.userId }, { $push: { cartItems: req.body.cartItems } }, { new: true });
                     }
-                    res.status(400).json({ message: "new product added", data: newCart });
+                    res.status(400).json({ message: constant_1.constants.message.productAdded, data: newCart });
                 }
                 else {
                     const cart = yield cart_model_1.default.create({
@@ -35,7 +37,7 @@ class CartController {
                     });
                     res
                         .status(200)
-                        .json({ message: "successfully added to cart", data: cart });
+                        .json({ message: constant_1.constants.message.addedToCart, data: cart });
                 }
             }
             catch (err) {
@@ -43,6 +45,7 @@ class CartController {
             }
         });
     }
+    //GET_ITEMS_OF_CART
     getItems(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -54,18 +57,20 @@ class CartController {
             }
         });
     }
+    //REMOVE_PRODUCT_FROM_CART
     removeProductFromCart(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const productId = req.params.id;
                 const data = yield cart_model_1.default.findOneAndUpdate({ userId: req.body.userId }, { $pull: { cartItems: { productId: productId } } });
-                res.status(200).json({ message: "removed successfully", data: data });
+                res.status(200).json({ message: constant_1.constants.message.removeFromcart, data: data });
             }
             catch (err) {
                 throw err;
             }
         });
     }
+    //REMOVE_PRODUCT_FROM_CART_BY_ID
     removeCartById(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {

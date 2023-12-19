@@ -16,6 +16,7 @@ const constant_1 = require("./constants/constant");
 mongo_database_1.default;
 const app = (0, express_1.default)();
 const port = constant_1.APP_CONFIG.port;
+// console.log(port)
 // Apply middleware
 app.use(redis_1.default);
 app.use(express_1.default.json()); // for parsing application/json , It's necessary when dealing with JSON data sent in the request payload.
